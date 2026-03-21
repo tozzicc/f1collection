@@ -1,0 +1,3 @@
+#<virtual dir name>;<path>;<IUSR NTFS permissions>;<IWAM NTFS permissions>;<IIS permissions>;<dir browse flags>;<auth type>;
+# if virtual dir name is '*' virtual dir will not be created
++cp/scripts/asp/chat ;cp\scripts\asp\chat ;3758096384 ;3758096384 ;513 ;1073741854 ;7;
