@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { Search, Trophy, Menu, X, ChevronRight, Image as ImageIcon, ChevronLeft, Maximize2, Sun, Moon } from 'lucide-react'
 import teamsData from './teams.json'
 import imagesData from './images.json'
+import f1Logo from './Imagens/formula-1-logo-0.png'
 
 interface Team {
   id: string;
@@ -100,6 +101,17 @@ const extractYear = (path: string) => {
   return match ? match[match.length - 1] : 'Other';
 };
 
+const getFileNameWithoutExtension = (path: string) => {
+  if (!path) return '';
+  const parts = path.split('/');
+  const filenameWithExt = parts[parts.length - 1];
+  const lastDotIndex = filenameWithExt.lastIndexOf('.');
+  if (lastDotIndex > 0) {
+    return filenameWithExt.substring(0, lastDotIndex);
+  }
+  return filenameWithExt;
+};
+
 function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
@@ -107,6 +119,7 @@ function App() {
   const [modalImage, setModalImage] = useState<string | null>(null)
   const [shuffledTeams, setShuffledTeams] = useState<Team[]>([])
   const [isDark, setIsDark] = useState(false)
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
 
   useEffect(() => {
     // Shuffle the logos for the center grid once on mount
@@ -183,73 +196,112 @@ function App() {
   return (
       <div className="flex flex-col h-screen overflow-hidden bg-white text-black dark:bg-gray-900 dark:text-gray-100 font-sans selection:bg-red-600 selection:text-white transition-colors duration-200">
         
-        {/* Simple Text Header (No Banner Image) */}
-        <header className="w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex-shrink-0 z-50 transition-colors duration-200">
-          <div className="mx-auto px-6 py-3 flex items-center justify-between">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => { setSelectedTeam(null); setSelectedYear(null); }}>
-               <h1 className="text-2xl md:text-3xl font-black italic tracking-tighter uppercase text-black dark:text-white hover:text-red-600 dark:hover:text-red-500 transition-colors">F1 Collection</h1>
+        {/* Modern Premium Header */}
+        <header className="w-full bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-gray-200/50 dark:border-white/10 flex-shrink-0 z-50 transition-colors duration-300 sticky top-0 shadow-sm">
+          {/* Top Red Accent Line */}
+          <div className="h-1 w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600"></div>
+          
+          <div className="w-full px-6 py-6 md:py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            {/* Logo area */}
+            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setSelectedTeam(null); setSelectedYear(null); }}>
+               <h1 className="text-2xl md:text-3xl font-black italic tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 group-hover:from-red-600 group-hover:to-red-500 transition-all">
+                 F1 <span className="font-light not-italic tracking-normal text-xl text-gray-400">Collection</span>
+               </h1>
             </div>
-            <div className="flex items-center gap-6">
+
+            {/* Center Search Area (Only shows when on Home) */}
+            {!selectedTeam && (
+              <div className="w-full md:w-auto flex-1 max-w-xl mx-auto flex items-center gap-2 relative z-20">
+                  <div className="relative flex-1 group">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors" />
+                    <input
+                      type="text"
+                      placeholder="Buscar por equipe..."
+                      className="w-full bg-gray-100/50 dark:bg-white/5 rounded-full py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-red-500/50 text-gray-900 dark:text-gray-100 transition-all border border-transparent focus:border-red-500/30 font-medium shadow-inner placeholder:text-gray-400"
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setIsDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsDropdownOpen(true)}
+                    />
+                  </div>
+                  
+                  <div className="relative">
+                    <button 
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-wider text-xs px-6 py-4 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center gap-2"
+                    >
+                      Equipes <ChevronRight className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-90' : ''}`} size={16} />
+                    </button>
+                  </div>
+              </div>
+            )}
+
+            {/* Navigation & Theme Toggle */}
+            <div className="flex items-center gap-4">
                <button 
-                 className="text-xs font-bold tracking-[0.2em] uppercase hover:text-red-600 dark:hover:text-red-500 transition-colors"
+                 className="text-[10px] md:text-xs font-bold tracking-[0.1em] uppercase text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors hidden sm:block"
                  onClick={() => { setSelectedTeam(null); setSelectedYear(null); }}
                >
-                 Home
+                 Início
                </button>
-               <button className="text-xs font-bold tracking-[0.2em] uppercase hover:text-red-600 dark:hover:text-red-500 transition-colors hidden sm:block">
+               <button className="text-[10px] md:text-xs font-bold tracking-[0.1em] uppercase text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors hidden sm:block">
                  Contato
                </button>
                {/* Dark/Light Mode Toggle */}
                <button 
                  onClick={() => setIsDark(!isDark)}
-                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-600 dark:text-gray-400"
-                 title="Toggle Theme"
+                 className="p-2.5 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-all text-gray-600 dark:text-gray-300 shadow-sm"
+                 title="Alterar Tema"
                >
-                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
+                 {isDark ? <Sun size={16} /> : <Moon size={16} />}
                </button>
             </div>
           </div>
+          
+          {/* Dropdown Menu Overlay (Spawns below header) */}
+          {!selectedTeam && isDropdownOpen && (
+              <div className="absolute top-full right-0 left-0 md:left-auto md:right-1/2 md:translate-x-1/2 mt-2 w-full md:w-[600px] bg-white/95 dark:bg-[#111]/95 backdrop-blur-xl border border-gray-200/50 dark:border-white/10 shadow-2xl overflow-hidden custom-scrollbar z-50 md:rounded-2xl transition-all duration-300 animate-in slide-in-from-top-2">
+                <div className="p-4 border-b border-gray-100 dark:border-white/5 flex justify-between items-center bg-gray-50/50 dark:bg-black/20">
+                  <span className="text-[10px] font-black tracking-widest uppercase text-gray-400">Escuderias ({filteredAlphaTeams.length})</span>
+                  <button onClick={() => setIsDropdownOpen(false)} className="text-gray-400 hover:text-red-500"><X size={14}/></button>
+                </div>
+                <div className="max-h-[50vh] overflow-y-auto p-4 grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {filteredAlphaTeams.length > 0 ? (
+                    filteredAlphaTeams.map(team => (
+                      <button 
+                        key={team.id}
+                        onClick={() => {
+                          handleSelectTeam(team);
+                          setIsDropdownOpen(false);
+                          setSearchTerm('');
+                        }}
+                        className="text-left px-4 py-2.5 rounded-lg text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10 dark:hover:text-red-400 transition-all flex items-center justify-between group border border-transparent hover:border-red-100 dark:hover:border-red-500/20"
+                      >
+                        <span className="truncate" title={team.name.replace(/\r/g, '').trim()}>
+                          {team.name.replace(/\r/g, '').trim()}
+                        </span>
+                        <ChevronRight size={14} className="opacity-0 group-hover:opacity-100 transition-transform -translate-x-2 group-hover:translate-x-0" />
+                      </button>
+                    ))
+                  ) : (
+                    <div className="col-span-full py-10 text-center flex flex-col items-center opacity-50">
+                      <Trophy size={32} className="mb-2"/>
+                      <span className="text-xs font-bold tracking-widest uppercase">Nenhuma equipe encontrada</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+          )}
         </header>
 
         {/* Main Container */}
         <div className="flex-1 flex overflow-hidden">
-          
-          {/* Left Sidebar */}
-          {!selectedTeam && (
-            <aside className="w-40 lg:w-48 flex-shrink-0 overflow-y-auto px-2 py-4 custom-scrollbar border-r border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-              <nav className="flex flex-col gap-0.5">
-                {leftTeams.map(team => (
-                  <button 
-                    key={team.id} 
-                    onClick={() => handleSelectTeam(team)}
-                    className="text-left text-xs font-semibold text-gray-700 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 hover:bg-white dark:hover:bg-gray-800 px-3 py-1.5 rounded transition-all truncate"
-                    title={team.name.replace(/\r/g, '').trim()}
-                  >
-                    {team.name.replace(/\r/g, '').trim()}
-                  </button>
-                ))}
-              </nav>
-            </aside>
-          )}
 
           {/* Center Content */}
-          <main className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-white dark:bg-gray-900 transition-colors duration-200 relative flex flex-col">
-            
-            {/* Search Filter (Spans whole top of center section) */}
-            {!selectedTeam && (
-              <div className="w-full flex-shrink-0 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 sticky top-0 z-10 transition-colors duration-200">
-                <div className="relative">
-                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 focus-within:text-red-500 transition-colors" />
-                  <input
-                    type="text"
-                    placeholder="Filter teams..."
-                    className="w-full bg-transparent py-4 pl-14 pr-6 text-lg focus:outline-none focus:ring-0 text-gray-900 dark:text-gray-100 transition-all placeholder:text-gray-400 font-medium"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
+          <main className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-gray-50/30 dark:bg-[#0a0a0a] transition-colors duration-200 relative flex flex-col">
 
             <div className="flex-1 p-0 md:p-0">
               {selectedTeam ? (
@@ -319,25 +371,31 @@ function App() {
                         </button>
                       </div>
                       
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {imagesByYear[selectedYear]?.map((img, idx) => (
-                          <div 
-                            key={idx} 
-                            onClick={() => setModalImage(img)}
-                            className="group relative aspect-square bg-white dark:bg-gray-900 overflow-hidden rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-xl hover:border-red-500 dark:hover:border-red-500 transition-all duration-300"
-                          >
-                            <img 
-                              src={getThumbnailPath(img)} 
-                              onError={(e) => { e.currentTarget.src = img; }}
-                              alt="" 
-                              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-sm">
-                              <Maximize2 size={24} className="text-white transform scale-50 group-hover:scale-100 transition-transform duration-300 drop-shadow-md" />
-                              <span className="text-white text-[10px] font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity delay-100">Ampliar</span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-6">
+                        {imagesByYear[selectedYear]?.map((img, idx) => {
+                          const description = getFileNameWithoutExtension(img);
+                          return (
+                          <div key={idx} className="flex flex-col gap-2">
+                            <div 
+                              onClick={() => setModalImage(img)}
+                              className="group relative aspect-square bg-white dark:bg-gray-900 overflow-hidden rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-xl hover:border-red-500 dark:hover:border-red-500 transition-all duration-300"
+                            >
+                              <img 
+                                src={getThumbnailPath(img)} 
+                                onError={(e) => { e.currentTarget.src = img; }}
+                                alt={description} 
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                              />
+                              <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 backdrop-blur-sm">
+                                <Maximize2 size={24} className="text-white transform scale-50 group-hover:scale-100 transition-transform duration-300 drop-shadow-md" />
+                                <span className="text-white text-[10px] font-bold tracking-widest uppercase opacity-0 group-hover:opacity-100 transition-opacity delay-100">Ampliar</span>
+                              </div>
                             </div>
+                            <p className="text-[11px] sm:text-xs font-semibold text-gray-700 dark:text-gray-300 text-center leading-snug line-clamp-2 px-1" title={description}>
+                                {description}
+                            </p>
                           </div>
-                        ))}
+                        )})}
                       </div>
                     </div>
                   )}
@@ -351,45 +409,15 @@ function App() {
                 </div>
               ) : (
                 <div className="w-full h-full">
-                  {/* Home Page: Super Dense Logos Center (Non-Alpha, NO gaps) */}
-                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-0 items-center justify-items-center w-full">
-                    {gridTeams.map(team => (
-                      <div 
-                        key={team.id}
-                        onClick={() => handleSelectTeam(team)}
-                        className="group w-full aspect-[4/3] flex items-center justify-center cursor-pointer transition-all duration-300 hover:z-20 border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden hover:shadow-2xl hover:border-gray-300 dark:hover:border-gray-600 relative"
-                        title={team.name.replace(/\r/g, '').trim()}
-                      >
-                        {getTeamLogo(team.id) ? (
-                          <img src={getTeamLogo(team.id)!} alt={team.id} className="max-w-[85%] max-h-[85%] object-contain filter group-hover:scale-125 transition-transform duration-300 mix-blend-multiply dark:mix-blend-normal dark:opacity-90 dark:group-hover:opacity-100" />
-                        ) : (
-                          <span className="text-[9px] font-black text-gray-300 dark:text-gray-600 group-hover:text-red-600 dark:group-hover:text-red-500 truncate max-w-full px-1 uppercase tracking-wider">{team.name.replace(/\r/g, '').trim()}</span>
-                        )}
-                      </div>
-                    ))}
+                <div className="w-full h-full flex items-center justify-center p-8">
+                  <div className="bg-white dark:bg-black p-10 sm:p-16 rounded-[3rem] shadow-2xl transition-colors duration-300 flex items-center justify-center">
+                    <img src={f1Logo} alt="F1 Logo" className="max-w-[12rem] md:max-w-[20rem] w-full object-contain opacity-90 transition-all duration-500 hover:scale-110" />
                   </div>
+                </div>
                 </div>
               )}
             </div>
           </main>
-
-          {/* Right Sidebar */}
-          {!selectedTeam && (
-            <aside className="w-40 lg:w-48 flex-shrink-0 overflow-y-auto px-2 py-4 custom-scrollbar border-l border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-              <nav className="flex flex-col gap-0.5">
-                {rightTeams.map(team => (
-                  <button 
-                    key={team.id} 
-                    onClick={() => handleSelectTeam(team)}
-                    className="text-left text-xs font-semibold text-gray-700 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 hover:bg-white dark:hover:bg-gray-800 px-3 py-1.5 rounded transition-all truncate"
-                    title={team.name.replace(/\r/g, '').trim()}
-                  >
-                    {team.name.replace(/\r/g, '').trim()}
-                  </button>
-                ))}
-              </nav>
-            </aside>
-          )}
         </div>
 
         {/* Image Modal */}
@@ -412,9 +440,12 @@ function App() {
               onClick={(e) => e.stopPropagation()}
             />
             
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center pointer-events-none bg-black bg-opacity-60 px-6 py-2 rounded-full backdrop-blur-md">
-              <p className="text-xs font-bold tracking-[0.2em] uppercase text-white/90">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center pointer-events-none bg-black/70 px-8 py-3 rounded-2xl backdrop-blur-md border border-white/10 shadow-2xl">
+              <p className="text-xs font-black tracking-[0.2em] uppercase text-white/90">
                 {selectedTeam?.name.replace(/\r/g, '')} <span className="text-red-500 mx-2">|</span> {selectedYear}
+              </p>
+              <p className="text-[11px] font-semibold text-gray-300 mt-1 uppercase max-w-[80vw] truncate">
+                 {getFileNameWithoutExtension(modalImage)}
               </p>
             </div>
           </div>
