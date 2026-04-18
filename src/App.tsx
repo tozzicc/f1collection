@@ -192,9 +192,8 @@ function App() {
   };
 
   const getThumbnailPath = (imgPath: string) => {
-    const parts = imgPath.split('/');
-    const filename = parts.pop();
-    return [...parts, 'thumbnails', filename].join('/');
+    // Legacy site structure is equipes/team/images/xyz and equipes/team/thumbnails/xyz
+    return imgPath.replace('/images/', '/thumbnails/').split('#')[0];
   };
 
   useEffect(() => {
