@@ -10,7 +10,12 @@ interface Team {
   path: string;
 }
 
-const typedImagesData = imagesData as Record<string, string[]>;
+interface ImageObject {
+  path: string;
+  description: string;
+}
+
+const typedImagesData = imagesData as Record<string, ImageObject[]>;
 
 // Logo mapping based on available files in old_site/logos
 const logoMapping: Record<string, string> = {
@@ -96,7 +101,13 @@ const logoMapping: Record<string, string> = {
   zaks: 'zakspeed.gif'
 };
 
-const extractYear = (path: string) => {
+const extractYear = (item: string | ImageObject) => {
+  const path = typeof item === 'string' ? item : item.path;
+  // First check for a hash suffix (added by our sync script)
+  const hashMatch = path.match(/#((?:19|20)\d{2})$/);
+  if (hashMatch) return hashMatch[1];
+
+  // Otherwise use the existing regex logic
   const match = path.match(/(?:19|20)\d{2}/g);
   return match ? match[match.length - 1] : 'Other';
 };
@@ -116,7 +127,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
   const [selectedYear, setSelectedYear] = useState<string | null>(null)
-  const [modalImage, setModalImage] = useState<string | null>(null)
+  const [modalImage, setModalImage] = useState<ImageObject | null>(null)
   const [shuffledTeams, setShuffledTeams] = useState<Team[]>([])
   const [isDark, setIsDark] = useState(false)
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
@@ -147,7 +158,7 @@ function App() {
   const imagesByYear = useMemo(() => {
     if (!selectedTeam) return {};
     const images = typedImagesData[selectedTeam.id] || [];
-    const grouped: Record<string, string[]> = {};
+    const grouped: Record<string, ImageObject[]> = {};
     
     images.forEach(img => {
       const year = extractYear(img);
@@ -160,9 +171,10 @@ function App() {
 
   const sortedYears = useMemo(() => {
     return Object.keys(imagesByYear).sort((a, b) => {
+      // Always put 'Other' at the absolute end
       if (a === 'Other') return 1;
       if (b === 'Other') return -1;
-      return b.localeCompare(a); // Descending order
+      return a.localeCompare(b); // Ascending order
     });
   }, [imagesByYear]);
 
@@ -196,70 +208,79 @@ function App() {
   return (
       <div className="flex flex-col h-screen overflow-hidden bg-white text-black dark:bg-gray-900 dark:text-gray-100 font-sans selection:bg-red-600 selection:text-white transition-colors duration-200">
         
-        {/* Modern Premium Header */}
-        <header className="w-full bg-white/80 dark:bg-[#0a0a0a]/80 backdrop-blur-md border-b border-gray-200/50 dark:border-white/10 flex-shrink-0 z-50 transition-colors duration-300 sticky top-0 shadow-sm">
-          {/* Top Red Accent Line */}
-          <div className="h-1 w-full bg-gradient-to-r from-red-600 via-red-500 to-red-600"></div>
-          
-          <div className="w-full px-6 py-6 md:py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Modern Premium Two-Tier Header */}
+        <header className="w-full bg-white dark:bg-[#0a0a0a] flex-shrink-0 z-50 transition-colors duration-300 sticky top-0 shadow-lg">
+
+          {/* Main Tier: Primary Navigation Bar */}
+          <div className="w-full px-6 py-10 md:py-16 flex flex-col lg:flex-row items-center justify-between gap-8 max-w-[1920px] mx-auto transition-all">
             
             {/* Logo area */}
-            <div className="flex items-center gap-3 cursor-pointer group" onClick={() => { setSelectedTeam(null); setSelectedYear(null); }}>
-               <h1 className="text-2xl md:text-3xl font-black italic tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400 group-hover:from-red-600 group-hover:to-red-500 transition-all">
-                 F1 <span className="font-light not-italic tracking-normal text-xl text-gray-400">Collection</span>
-               </h1>
+            <div className="flex items-center gap-4 cursor-pointer group" onClick={() => { setSelectedTeam(null); setSelectedYear(null); }}>
+               <div className="relative">
+                 <div className="absolute -inset-2 bg-red-600/10 rounded-lg blur-lg group-hover:bg-red-600/20 transition-all duration-500"></div>
+                 <h1 className="relative text-3xl md:text-5xl font-extrabold italic tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-gray-900 via-gray-600 to-gray-900 dark:from-white dark:via-gray-400 dark:to-white group-hover:from-red-600 group-hover:to-red-500 transition-all duration-500">
+                   F1 <span className="font-light not-italic tracking-normal text-2xl text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-500">COLLECTION</span>
+                 </h1>
+               </div>
             </div>
 
-            {/* Center Search Area (Only shows when on Home) */}
-            {!selectedTeam && (
-              <div className="w-full md:w-auto flex-1 max-w-xl mx-auto flex items-center gap-2 relative z-20">
-                  <div className="relative flex-1 group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 group-focus-within:text-red-500 transition-colors" />
-                    <input
-                      type="text"
-                      placeholder="Buscar por equipe..."
-                      className="w-full bg-gray-100/50 dark:bg-white/5 rounded-full py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-red-500/50 text-gray-900 dark:text-gray-100 transition-all border border-transparent focus:border-red-500/30 font-medium shadow-inner placeholder:text-gray-400"
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setIsDropdownOpen(true);
-                      }}
-                      onFocus={() => setIsDropdownOpen(true)}
-                    />
-                  </div>
-                  
-                  <div className="relative">
-                    <button 
-                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                      className="bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-wider text-xs px-6 py-4 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-md hover:shadow-lg active:scale-95 flex items-center gap-2"
-                    >
-                      Equipes <ChevronRight className={`transition-transform duration-300 ${isDropdownOpen ? 'rotate-90' : ''}`} size={16} />
-                    </button>
-                  </div>
-              </div>
-            )}
+            {/* Center Area: Search & Equipes */}
+            <div className={`flex-1 w-full max-w-2xl px-4 transition-all duration-700 flex items-center gap-6 ${selectedTeam ? 'opacity-0 invisible scale-95 -translate-y-4' : 'opacity-100 visible scale-100 translate-y-0'}`}>
+              
+              {/* External Search Icon */}
+              <Search className="h-6 w-6 text-gray-400 dark:text-gray-500 flex-shrink-0" />
 
-            {/* Navigation & Theme Toggle */}
-            <div className="flex items-center gap-4">
+              {/* Search Box */}
+              <div className="flex-1 flex items-center p-2 bg-gray-100/50 dark:bg-white/5 rounded-[2rem] border border-gray-200/50 dark:border-white/10 shadow-inner focus-within:ring-4 focus-within:ring-red-500/10 focus-within:border-red-500/30 transition-all duration-300">
+                <input
+                  type="text"
+                  placeholder="Encontre sua equipe favorita..."
+                  className="w-full bg-transparent py-4 px-6 text-lg focus:outline-none text-gray-900 dark:text-gray-100 font-medium placeholder:text-gray-400"
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    setIsDropdownOpen(true);
+                  }}
+                  onFocus={() => setIsDropdownOpen(true)}
+                />
+              </div>
+              
+              {/* External Equipes Button */}
+              <button 
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.1em] text-[11px] px-8 py-4 rounded-[1.5rem] hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-xl active:scale-95 flex items-center gap-2 group/btn whitespace-nowrap"
+              >
+                EQUIPES <ChevronRight className={`transition-transform duration-500 ${isDropdownOpen ? 'rotate-90' : ''}`} size={16} />
+              </button>
+            </div>
+
+            {/* Right Area: Navigation Links */}
+            <div className="flex items-center gap-10">
+               {/* Dark/Light Mode Toggle Moved Here */}
                <button 
-                 className="text-[10px] md:text-xs font-bold tracking-[0.1em] uppercase text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors hidden sm:block"
+                onClick={() => setIsDark(!isDark)}
+                className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-all focus:outline-none"
+                title="Alterar Tema"
+               >
+                {isDark ? <Sun size={14} /> : <Moon size={14} />}
+               </button>
+
+               <button 
+                 className={`text-xs font-black tracking-[0.2em] uppercase transition-all relative group ${!selectedTeam ? 'text-red-600' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
                  onClick={() => { setSelectedTeam(null); setSelectedYear(null); }}
                >
                  Início
+                 <span className={`absolute -bottom-2 left-0 w-full h-0.5 bg-red-600 transition-transform duration-300 ${!selectedTeam ? 'scale-x-100' : 'scale-x-0 group-hover:scale-x-100'}`}></span>
                </button>
-               <button className="text-[10px] md:text-xs font-bold tracking-[0.1em] uppercase text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-500 transition-colors hidden sm:block">
-                 Contato
-               </button>
-               {/* Dark/Light Mode Toggle */}
-               <button 
-                 onClick={() => setIsDark(!isDark)}
-                 className="p-2.5 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-all text-gray-600 dark:text-gray-300 shadow-sm"
-                 title="Alterar Tema"
-               >
-                 {isDark ? <Sun size={16} /> : <Moon size={16} />}
+               <button className="text-xs font-black tracking-[0.2em] uppercase text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all relative group">
+                 Sobre
+                 <span className="absolute -bottom-2 left-0 w-full h-0.5 bg-red-600 transition-transform duration-300 scale-x-0 group-hover:scale-x-100"></span>
                </button>
             </div>
           </div>
+          
+          {/* Bottom Accent Line */}
+          <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-red-600/50 to-transparent"></div>
           
           {/* Dropdown Menu Overlay (Spawns below header) */}
           {!selectedTeam && isDropdownOpen && (
@@ -320,7 +341,7 @@ function App() {
                       </h2>
                     </div>
                     {getTeamLogo(selectedTeam.id) && (
-                      <div className="w-24 h-24 sm:w-32 sm:h-32 p-4 bg-white rounded-xl shadow-sm border border-gray-200 flex items-center justify-center transform rotate-2 hover:rotate-0 transition-transform duration-300">
+                      <div className="w-24 h-24 sm:w-32 sm:h-32 p-4 bg-white rounded-xl shadow-sm border border-gray-200 flex items-center justify-center transition-transform duration-300">
                         {/* Logo kept on white bg so dark logos stay visible if they don't have transparency or if they are black */}
                         <img src={getTeamLogo(selectedTeam.id)!} alt={selectedTeam.name} className="max-w-full max-h-full object-contain" />
                       </div>
@@ -373,16 +394,16 @@ function App() {
                       
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-4 gap-y-6">
                         {imagesByYear[selectedYear]?.map((img, idx) => {
-                          const description = getFileNameWithoutExtension(img);
+                          const description = img.description;
                           return (
                           <div key={idx} className="flex flex-col gap-2">
                             <div 
                               onClick={() => setModalImage(img)}
-                              className="group relative aspect-square bg-white dark:bg-gray-900 overflow-hidden rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-xl hover:border-red-500 dark:hover:border-red-500 transition-all duration-300"
+                              className="group relative aspect-video bg-white dark:bg-gray-900 overflow-hidden rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-xl hover:border-red-500 dark:hover:border-red-500 transition-all duration-300"
                             >
                               <img 
-                                src={getThumbnailPath(img)} 
-                                onError={(e) => { e.currentTarget.src = img; }}
+                                src={getThumbnailPath(img.path)} 
+                                onError={(e) => { e.currentTarget.src = img.path; }}
                                 alt={description} 
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                               />
@@ -434,18 +455,18 @@ function App() {
             </button>
             
             <img 
-              src={modalImage} 
+              src={modalImage.path} 
               alt="F1 Record"
               className="relative max-w-full max-h-full rounded-lg shadow-2xl animate-in zoom-in-95 duration-500 bg-white" 
               onClick={(e) => e.stopPropagation()}
             />
             
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center pointer-events-none bg-black/70 px-8 py-3 rounded-2xl backdrop-blur-md border border-white/10 shadow-2xl">
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-center pointer-events-none bg-black/75 px-16 py-4 rounded-3xl backdrop-blur-md border border-white/10 shadow-2xl min-w-[320px]">
               <p className="text-xs font-black tracking-[0.2em] uppercase text-white/90">
                 {selectedTeam?.name.replace(/\r/g, '')} <span className="text-red-500 mx-2">|</span> {selectedYear}
               </p>
               <p className="text-[11px] font-semibold text-gray-300 mt-1 uppercase max-w-[80vw] truncate">
-                 {getFileNameWithoutExtension(modalImage)}
+                 {modalImage.description}
               </p>
             </div>
           </div>

@@ -4,10 +4,11 @@
 :root {
   --f1-red: #e10600;
   --f1-black: #0a0a0a;
-  --f1-dark-gray: #1f1f1f;
-  --f1-light-gray: #f5f5f5;
-  --glass-bg: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --f1-dark-gray: #121212;
+  --f1-light-gray: #f8f8f8;
+  --glass-bg: rgba(255, 255, 255, 0.01);
+  --glass-border: rgba(255, 255, 255, 0.05);
+  --nav-blur: 20px;
 }
 
 * {
@@ -25,9 +26,16 @@ body {
 
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(var(--nav-blur));
+  -webkit-backdrop-filter: blur(var(--nav-blur));
   border: 1px solid var(--glass-border);
+}
+
+.glass-dark {
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(var(--nav-blur));
+  -webkit-backdrop-filter: blur(var(--nav-blur));
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .sidebar-link {
@@ -54,7 +62,7 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
@@ -62,12 +70,19 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #222;
+  background: #ccc;
   border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #333;
+  background: var(--f1-red);
+  background-clip: content-box;
 }
 
 .team-card {
