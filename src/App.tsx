@@ -103,13 +103,21 @@ const logoMapping: Record<string, string> = {
 
 const extractYear = (item: string | ImageObject) => {
   const path = typeof item === 'string' ? item : item.path;
+  const description = typeof item === 'string' ? '' : item.description;
+
   // First check for a hash suffix (added by our sync script)
   const hashMatch = path.match(/#((?:19|20)\d{2})$/);
   if (hashMatch) return hashMatch[1];
 
-  // Otherwise use the existing regex logic
-  const match = path.match(/(?:19|20)\d{2}/g);
-  return match ? match[match.length - 1] : 'Other';
+  // Check for 4-digit year in path
+  const pathMatch = path.match(/(?:19|20)\d{2}/g);
+  if (pathMatch) return pathMatch[pathMatch.length - 1];
+
+  // Check for 4-digit year in description
+  const descMatch = description.match(/(?:19|20)\d{2}/g);
+  if (descMatch) return descMatch[descMatch.length - 1];
+
+  return 'Geral';
 };
 
 const getFileNameWithoutExtension = (path: string) => {
@@ -171,9 +179,9 @@ function App() {
 
   const sortedYears = useMemo(() => {
     return Object.keys(imagesByYear).sort((a, b) => {
-      // Always put 'Other' at the absolute end
-      if (a === 'Other') return 1;
-      if (b === 'Other') return -1;
+      // Always put 'Geral' at the absolute end
+      if (a === 'Geral') return 1;
+      if (b === 'Geral') return -1;
       return a.localeCompare(b); // Ascending order
     });
   }, [imagesByYear]);
@@ -192,8 +200,43 @@ function App() {
   };
 
   const getThumbnailPath = (imgPath: string) => {
+    if (!imgPath) return '';
+    // Strip hash fragment before generating thumbnail path
+    const cleanPath = imgPath.split('#')[0];
     // Legacy site structure is equipes/team/images/xyz and equipes/team/thumbnails/xyz
-    return imgPath.replace('/images/', '/thumbnails/').split('#')[0];
+    return cleanPath.replace('/images/', '/thumbnails/');
+  };
+
+  // Encode each path segment to handle special characters (accents, spaces, etc.)
+  const safeEncodePath = (path: string): string => {
+    if (!path) return '';
+    
+    // Split hash/fragment first to avoid encoding it
+    const parts = path.split('#');
+    const baseUrl = parts[0];
+    const hash = parts[1];
+
+    try {
+      const encodedBase = baseUrl.split('/').map(segment => {
+        try {
+          // Try to decode as UTF-8 first (already percent-encoded segments)
+          const decoded = decodeURIComponent(segment);
+          return encodeURIComponent(decoded);
+        } catch {
+          // If decoding failed, it's likely legacy Latin-1/ISO-8859-1 percent encoding
+          // (e.g., %BA for º). We decode it manually and then encode as UTF-8.
+          const latin1Decoded = segment.replace(/%([0-9A-F]{2})/gi, (_match, hex) => {
+            return String.fromCharCode(parseInt(hex, 16));
+          });
+          return encodeURIComponent(latin1Decoded);
+        }
+      }).join('/');
+      
+      // Return with hash preserved if it existed
+      return hash ? `${encodedBase}#${hash}` : encodedBase;
+    } catch {
+      return path;
+    }
   };
 
   useEffect(() => {
@@ -323,9 +366,9 @@ function App() {
           {/* Center Content */}
           <main className="flex-1 min-w-0 overflow-y-auto custom-scrollbar bg-gray-50/30 dark:bg-[#0a0a0a] transition-colors duration-200 relative flex flex-col">
 
-            <div className="flex-1 p-0 md:p-0">
+            <div className="flex-1 p-0 md:p-0 flex flex-col items-center">
               {selectedTeam ? (
-                <div className="max-w-6xl mx-auto p-6 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="w-full max-w-6xl p-6 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="flex items-start justify-between mb-8 pb-4 border-b border-gray-200 dark:border-gray-800 text-black dark:text-white transition-colors duration-200">
                     <div>
                       <button 
@@ -401,8 +444,8 @@ function App() {
                               className="group relative aspect-video bg-white dark:bg-gray-900 overflow-hidden rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-xl hover:border-red-500 dark:hover:border-red-500 transition-all duration-300"
                             >
                               <img 
-                                src={getThumbnailPath(img.path)} 
-                                onError={(e) => { e.currentTarget.src = img.path; }}
+                                src={safeEncodePath(getThumbnailPath(img.path))} 
+                                onError={(e) => { e.currentTarget.src = safeEncodePath(img.path); }}
                                 alt={description} 
                                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
                               />
@@ -454,7 +497,7 @@ function App() {
             </button>
             
             <img 
-              src={modalImage.path} 
+              src={safeEncodePath(modalImage.path)} 
               alt="F1 Record"
               className="relative max-w-full max-h-full rounded-lg shadow-2xl animate-in zoom-in-95 duration-500 bg-white" 
               onClick={(e) => e.stopPropagation()}

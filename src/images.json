@@ -4597,7 +4597,7 @@
       "description": "Mercedes-Benz W-125 1937 Nº6"
     },
     {
-      "path": "/old_site/equipes/merc/images/Mercedes-Benz W125 Slberpfeil 1937 N�8.jpg",
+      "path": "/old_site/equipes/merc/images/Mercedes-Benz%20W125%20Slberpfeil%201937%20N%BA8.jpg#1937",
       "description": "Mercedes-Benz W125 Slberpfeil 1937 Nº8"
     },
     {
@@ -5327,11 +5327,11 @@
   ],
   "redb": [
     {
-      "path": "/old_site/equipes/redb/images/f1001.jpg",
+      "path": "/old_site/equipes/redb/images/f1001.jpg#2005",
       "description": "Red Bull - Cosworth RB1 Nº15 - C. Klien"
     },
     {
-      "path": "/old_site/equipes/redb/images/f1004.jpg",
+      "path": "/old_site/equipes/redb/images/f1004.jpg#2005",
       "description": "Red Bull - Cosworth RB1 Nº15 - V. Liuzzi"
     },
     {
