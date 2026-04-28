@@ -247,9 +247,9 @@ function App() {
               {/* External Equipes Button */}
               <button 
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.1em] text-[11px] px-8 py-4 rounded-[1.5rem] hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-xl active:scale-95 flex items-center gap-2 group/btn whitespace-nowrap"
+                className="bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-[0.15em] text-[14px] px-20 py-5 min-w-[220px] rounded-[1.5rem] hover:bg-gray-800 dark:hover:bg-gray-200 transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3 group/btn whitespace-nowrap"
               >
-                EQUIPES <ChevronRight className={`transition-transform duration-500 ${isDropdownOpen ? 'rotate-90' : ''}`} size={16} />
+                EQUIPES <ChevronRight className={`transition-transform duration-500 ${isDropdownOpen ? 'rotate-90' : ''}`} size={18} />
               </button>
             </div>
 
